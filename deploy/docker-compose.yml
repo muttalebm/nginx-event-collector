@@ -1,0 +1,61 @@
+version: '3.7'
+networks:
+  mybl-net:
+    driver: ${NETWORKS_DRIVER}
+    external: true
+services:
+  app:
+    image: ${COMPOSE_PROJECT_NAME}_app:${DOCKER_BUILD_MODE}
+    container_name: ${COMPOSE_PROJECT_NAME}
+    build:
+      context: ${DOCKER_BUILD_CONTEXT_DIR}
+      dockerfile: deploy/images/app/app.Dockerfile
+      args:
+        - HTTP_PROXY=${APP_HTTP_PROXY}
+        - HTTPS_PROXY=${APP_HTTPS_PROXY}
+        - NO_PROXY=${APP_NO_PROXY}
+        - BUILD_MODE=${DOCKER_BUILD_MODE}
+        - TIMEZONE=${TIMEZONE}
+        - WORK_DIR_PATH=${WORK_DIR_PATH}
+        - APT_DEPENDENCIES=${DEBUG_TOOLS}
+        - IMAGE_VERSION=${NGINX_IMAGE_VERSION}
+
+    volumes:
+      - ./data/nginx/template:/etc/nginx/templates
+    restart: always
+    environment:
+      - CONTAINER_ROLE=app
+    ports:
+      - ${WEB_HTTPS_PUBLISH_PORT}:443
+    networks:
+      mybl-net:
+        aliases:
+          - nginx_event_collector
+    links:
+      - fluentd
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: ${FLUEND_HOST}:24224
+        tag: nginx_event_collector.access
+  fluentd:
+    build: 
+      context: ${DOCKER_BUILD_CONTEXT_DIR}
+      dockerfile: deploy/images/fluentd/fluentd.Dockerfile
+      args:
+        - HTTP_PROXY=${APP_HTTP_PROXY}
+        - HTTPS_PROXY=${APP_HTTPS_PROXY}
+        - NO_PROXY=${APP_NO_PROXY}
+        - BUILD_MODE=${DOCKER_BUILD_MODE}
+        - TIMEZONE=${TIMEZONE}
+        - IMAGE_VERSION=${FLUENTD_IMAGE_VERSION}
+    container_name: fluentd-aggregator
+    links:
+      - "elasticsearch"
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"
+    networks:
+      mybl-net:
+        aliases:
+          - nginx_event_collector
