@@ -10,7 +10,7 @@ This event logger was built for a lightweight event log and reporting purposes. 
 - `identifier=ABC123` // any kind of content id `eg: C3P0`
 - `source=sample_event_source` // event source 
 
-This "event" is then logged and aggregated using the lightest possible system (nginx, fluentd and elasticsearch) and, from there we could then easy dump raw data, build dashboards and do other stuff that our wild imagination can perceive.
+This "event" is then logged and aggregated using the lightest and quickest possible system (nginx, fluentd and elasticsearch) and, from there we could then easily dump raw data, build dashboards and do other stuff that our wild imagination can perceive.
 
 ## Installation
 
