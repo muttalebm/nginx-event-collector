@@ -3,7 +3,3 @@ node_modules*
 #package-lock.json
 *.idea
 # Ignore the contents of 'mydirectory'
-processed_csv/*
-
-# Allow 'mydirectory' to be tracked
-!processed_csv/
