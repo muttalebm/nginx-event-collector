@@ -36,30 +36,78 @@ function generateIndex(date) {
         return `${env_index}-${formattedDate}`;
     }
 }
-
+// Elastic data fetch and format
+// async function fetchDataWithScroll() {
+//     const currentDate = new Date();
+//     console.log('currentDate', currentDate);
+//     // Format the date as 'YYYYMMDD'
+//     const formattedDate = currentDate.toISOString().slice(0, 10).replace(/-/g, '');
+//     console.log('formattedDate', formattedDate);
+//
+//     // Create the index variable
+//     const index = `${env_index}-${formattedDate}`;
+//     console.log('index', index);
+//
+//     const batchSize = process.env.BATCH_SIZE; // Number of documents to fetch per scroll
+//     console.log('batchSize', batchSize);
+//
+//     // Fetch initial data
+//     const initialResponse = await fetchInitialData(index, batchSize);
+//     console.log('initialResponse', initialResponse);
+//
+//     // Process and export data for each date
+//     const uniqueDates = getUniqueDates(initialResponse);
+//     console.log('uniqueDates', uniqueDates);
+//
+//     for (const date of uniqueDates) {
+//         const dataForDate = filterDataByDate(initialResponse, date);
+//         console.log('dataForDate as date dataForDate', date, dataForDate);
+//
+//         let formattedEvents = await formatEvents(dataForDate);
+//
+//         console.log('formattedEvents as date formattedEvents', date, formattedEvents);
+//
+//         let headers = makeHeaders(formattedEvents[0]);
+//         console.log('headers ', headers);
+//
+//         await exportDataToCSV(headers, formattedEvents, date);
+//     }
+//
+//     console.log('Data exported to CSV files based on each date.');
+//     return 'Data exported to CSV files based on each date.'; // Return a completion message
+// }
 async function fetchDataWithScroll() {
     const currentDate = new Date();
-// Format the date as 'YYYYMMDD'
-    const formattedDate = currentDate.toISOString().slice(0, 10).replace(/-/g, '');
-// Create the index variable
-    const index = `${env_index}-${formattedDate}`;
+    console.log('currentDate', currentDate);
 
-    // const index = 'fluentd-20230912';
+    // Format the date as 'YYYYMMDD'
+    const formattedDate = currentDate.toISOString().slice(0, 10).replace(/-/g, '');
+    console.log('formattedDate', formattedDate);
+
+    // Create the index variable
+    const index = `${env_index}-${formattedDate}`;
+    console.log('index', index);
+
     const batchSize = process.env.BATCH_SIZE; // Number of documents to fetch per scroll
+    console.log('batchSize', batchSize);
 
     // Fetch initial data
     const initialResponse = await fetchInitialData(index, batchSize);
+    console.log('initialResponse', initialResponse);
 
-    // Process and export data for each date
-    const uniqueDates = getUniqueDates(initialResponse);
-    for (const date of uniqueDates) {
-        const dataForDate = filterDataByDate(initialResponse, date);
-        let formattedEvents = await formatEvents(dataForDate);
-        let  headers = makeHeaders(formattedEvents[0]);
-        await exportDataToCSV(headers, formattedEvents, date);
-    }
+    // const dataForDate = initialResponse; // All data is for the current date
 
-    console.log('Data exported to CSV files based on each date.');
+    let formattedEvents = await formatEvents(initialResponse);
+
+    console.log('formattedEvents as date formattedEvents', formattedEvents);
+
+    let headers = makeHeaders(formattedEvents[0]);
+    console.log('headers ', headers);
+
+    await exportDataToCSV(headers, formattedEvents, formattedDate);
+
+    console.log('Data exported to CSV file for the current date.');
+    return 'Data exported to CSV file for the current date.'; // Return a completion message
 }
 
 function makeHeaders(data)
@@ -81,34 +129,44 @@ async function formatEvents($data) {
     return allFormattedDate;
     // console.log(allFormattedDate);
 }
-
-// Function to fetch the initial data from Elasticsearch
 async function fetchInitialData(index, batchSize) {
-    // let scrollTime;
-    const params = {
-        index,
-        scroll: scrollTime,
-        size: batchSize,
-        body: {
-            "query": {
-                "match_all": {}
-            },
-            "_source": ["events", "@timestamp"]
-        },
-    };
-
-    let scrollResp = await client.search(params);
-    const initialData = scrollResp.hits.hits.map(hit => hit._source);
-
-    while (scrollResp.hits.hits.length > 0) {
-        scrollResp = await client.scroll({
-            scroll_id: scrollResp._scroll_id,
+    try {
+        const params = {
+            index,
             scroll: scrollTime,
-        });
-        initialData.push(...scrollResp.hits.hits.map(hit => hit._source));
-    }
+            size: batchSize,
+            body: {
+                query: {
+                    match_all: {},
+                },
+                _source: ["events", "@timestamp"],
+            },
+        };
 
-    return initialData;
+        let scrollResp = await client.search(params);
+        const initialData = scrollResp.hits.hits.map((hit) => hit._source);
+
+        while (scrollResp.hits.hits.length > 0) {
+            scrollResp = await client.scroll({
+                scroll_id: scrollResp._scroll_id,
+                scroll: scrollTime,
+            });
+            initialData.push(...scrollResp.hits.hits.map((hit) => hit._source));
+        }
+
+        return initialData;
+    } catch (error) {
+        if (error.name === 'NoLivingConnectionsError') {
+            // Handle Elasticsearch connection error
+            throw new Error('Failed to connect to Elasticsearch. Please check your Elasticsearch server.');
+        } else if (error.name === 'ResponseError' && error.statusCode === 503) {
+            // Handle server shutdown or service unavailable
+            throw new Error('Elasticsearch server is currently unavailable. Please try again later.');
+        } else {
+            // Handle other errors
+            throw error;
+        }
+    }
 }
 
 // Function to get unique dates from the data
