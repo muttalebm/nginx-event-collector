@@ -9,8 +9,6 @@ const {
     fetchDataWithScroll,
     formatEvents,
     fetchInitialData,
-    getUniqueDates,
-    filterDataByDate,
     exportDataToCSV
 } = require('./app'); // Update the path to your script file
 

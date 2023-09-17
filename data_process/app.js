@@ -8,7 +8,6 @@ const client = new Client({node: process.env.ELASTIC_HOST + ':' + process.env.EL
 const scrollTime = process.env.SCROLL_TIME; // Scroll time interval
 const env_index = process.env.FLUENTD_INDEX_PREFFIX;
 
-// console.log('env', process.env.ELASTIC_HOST);
 
 async function fetchAndProcessData(date) {
     try {
@@ -36,46 +35,6 @@ function generateIndex(date) {
         return `${env_index}-${formattedDate}`;
     }
 }
-// Elastic data fetch and format
-// async function fetchDataWithScroll() {
-//     const currentDate = new Date();
-//     console.log('currentDate', currentDate);
-//     // Format the date as 'YYYYMMDD'
-//     const formattedDate = currentDate.toISOString().slice(0, 10).replace(/-/g, '');
-//     console.log('formattedDate', formattedDate);
-//
-//     // Create the index variable
-//     const index = `${env_index}-${formattedDate}`;
-//     console.log('index', index);
-//
-//     const batchSize = process.env.BATCH_SIZE; // Number of documents to fetch per scroll
-//     console.log('batchSize', batchSize);
-//
-//     // Fetch initial data
-//     const initialResponse = await fetchInitialData(index, batchSize);
-//     console.log('initialResponse', initialResponse);
-//
-//     // Process and export data for each date
-//     const uniqueDates = getUniqueDates(initialResponse);
-//     console.log('uniqueDates', uniqueDates);
-//
-//     for (const date of uniqueDates) {
-//         const dataForDate = filterDataByDate(initialResponse, date);
-//         console.log('dataForDate as date dataForDate', date, dataForDate);
-//
-//         let formattedEvents = await formatEvents(dataForDate);
-//
-//         console.log('formattedEvents as date formattedEvents', date, formattedEvents);
-//
-//         let headers = makeHeaders(formattedEvents[0]);
-//         console.log('headers ', headers);
-//
-//         await exportDataToCSV(headers, formattedEvents, date);
-//     }
-//
-//     console.log('Data exported to CSV files based on each date.');
-//     return 'Data exported to CSV files based on each date.'; // Return a completion message
-// }
 async function fetchDataWithScroll() {
     const currentDate = new Date();
     console.log('currentDate', currentDate);
@@ -127,7 +86,6 @@ async function formatEvents($data) {
         allFormattedDate.push(cpUniqueData);
     }
     return allFormattedDate;
-    // console.log(allFormattedDate);
 }
 async function fetchInitialData(index, batchSize) {
     try {
@@ -169,32 +127,13 @@ async function fetchInitialData(index, batchSize) {
     }
 }
 
-// Function to get unique dates from the data
-function getUniqueDates(data) {
-    const uniqueDates = new Set();
-    for (let record of data) {
-        const date = record['@timestamp'].split('T')[0]; // Assuming 'timestamp' is a date field
-        uniqueDates.add(date);
-
-
-    }
-    return Array.from(uniqueDates);
-}
-
-// Function to filter data by date
-function filterDataByDate(data, date) {
-    return data.filter(record => record['@timestamp'].split('T')[0] === date);
-}
-
 // Function to export data to CSV for a given date
 async function exportDataToCSV(headers, data, date) {
     const csvWriter = createObjectCsvWriter({
         path: `./processed_csv/${date}_output.csv`,
         header: headers
     });
-
     await csvWriter.writeRecords(data);
-    console.log(`Data for ${date} exported to ${date}_output.csv`);
 }
 
 // Call the function to start fetching and exporting data
@@ -207,8 +146,6 @@ module.exports = {
     fetchDataWithScroll,
     formatEvents,
     fetchInitialData,
-    getUniqueDates,
-    filterDataByDate,
     exportDataToCSV
 };
 
