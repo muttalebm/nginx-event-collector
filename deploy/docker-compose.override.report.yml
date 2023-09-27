@@ -1,0 +1,34 @@
+version: '3.7'
+
+networks:
+  mybl-net:
+    driver: ${NETWORKS_DRIVER}
+    external: true
+services:
+  report:
+    image: ${COMPOSE_PROJECT_NAME}_report:${DOCKER_BUILD_MODE}
+    build: 
+      context: ${DOCKER_BUILD_CONTEXT_DIR}
+      dockerfile: deploy/images/node/node.Dockerfile
+      args:
+        - APP_NAME=${COMPOSE_PROJECT_NAME}_report
+        - APP_ENV=${DOCKER_BUILD_MODE}
+        - TZ=${TIMEZONE}
+        - LOG_NAME=toffee_event
+        - LOG_LEVEL=debug
+        - LOG_LOCATION=/usr/src/app/logs
+        - LOG_MAX_KEEP=14d
+        - LOG_MAX_SIZE=100m
+    environment:
+      - ES_PASSWORD=${ELASTIC_PASSWORD}
+      - ES_URL=http://elasticsearch:9200
+      - ES_USER=elastic
+    volumes:
+      - ${DOCKER_VOLUME_CODES_ROOT_DIR}/worker:/usr/src/app
+      - ../output/reports:/usr/src/app/output
+    command: ["yarn", "run", "report"]
+    # restart: never
+    networks:
+      mybl-net:
+        aliases:
+          - nginx_event_collector
