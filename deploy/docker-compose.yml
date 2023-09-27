@@ -3,7 +3,7 @@ networks:
   mybl-net:
     driver: ${NETWORKS_DRIVER}
     external: true
-services:
+services:  
   app:
     image: ${COMPOSE_PROJECT_NAME}_app:${DOCKER_BUILD_MODE}
     container_name: ${COMPOSE_PROJECT_NAME}
