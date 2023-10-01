@@ -21,12 +21,13 @@ services:
         - LOG_MAX_SIZE=100m
     environment:
       - ES_PASSWORD=${ELASTIC_PASSWORD}
-      - ES_URL=http://elasticsearch:9200
-      - ES_USER=elastic
+      - ES_URL=https://172.16.7.251:9200
+      - ES_USER=heartbeat
+      - ES_INDEX=hbevents-
     volumes:
       - ${DOCKER_VOLUME_CODES_ROOT_DIR}/worker:/usr/src/app
       - ../output/reports:/usr/src/app/output
-    command: ["yarn", "run", "report"]
+    # command: ["yarn", "run", "report",""]
     # restart: never
     networks:
       mybl-net:

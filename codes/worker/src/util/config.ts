@@ -12,6 +12,6 @@ export const LOG_WRITE_TO_FILE:boolean = process.env.LOG_WRITE_TO_FILE=="true" |
 export const LOG_NAME = process.env.LOG_NAME 
 export const ES_URL:string=process.env.ES_URL || 'http://localhost:9200';
 export const ES_USER:string=process.env.ES_USER || 'elastic';
-export const ES_PASSWORD:string =process.env.ES_PASSWWORD ||'default@123';
-export const ES_INDEX_NAME:string=process.env.ES_INDEX_NAME||'fluentd-*'
+export const ES_PASSWORD:string =process.env.ES_PASSWORD ||'default@123';
+export const ES_INDEX_NAME:string=process.env.ES_INDEX||'fluentd-*'
 export const ES_SCROLL_DURATION:string=process.env.ES_SCROLL_DURATION||'30s'

@@ -49,6 +49,8 @@ RUN apt-get update \
     && apt-get install -yq tzdata \
     && dpkg-reconfigure -f noninteractive tzdata \
     && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone \
+    && yarn config set "strict-ssl" false \
+    && yarn add -G typescript tsc ts-node \
     && yarn install \
     && yarn run build
 

@@ -27,7 +27,6 @@ const level = () => {
 
 const format = winston.format.combine(
     winston.format.timestamp({format: 'YYYY-MM-DD HH:mm:ss:ms'}),
-    // winston.format.colorize({all: true}),
     winston.format.printf(
         (info) => `${info.timestamp} [${config.APP_NAME}] [${info.level}]: ${info.message}`,
     ),
